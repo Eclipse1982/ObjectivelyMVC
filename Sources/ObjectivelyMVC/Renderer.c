@@ -36,6 +36,13 @@
 
 #define _Class _Renderer
 
+/**
+ * @brief The most recently initialized Renderer (ObjectivelyMVC is used with a
+ * single Renderer). Lets deletion sites without a Renderer reference route
+ * through the active Renderer's destroyTexture vtable.
+ */
+static Renderer *_currentRenderer;
+
 #define GL_GET_ERROR() do { \
   GLenum _err; \
   while ((_err = glGetError()) != GL_NO_ERROR) { \
@@ -249,6 +256,15 @@ static void drawTexture(const Renderer *self, GLuint texture, const SDL_Rect *re
 }
 
 /**
+ * @fn void Renderer::destroyTexture(const Renderer *self, GLuint texture)
+ * @memberof Renderer
+ */
+static void destroyTexture(const Renderer *self, GLuint texture) {
+
+  glDeleteTextures(1, &texture);
+}
+
+/**
  * @fn void Renderer::drawView(Renderer *self, View *view)
  * @memberof Renderer
  */
@@ -295,6 +311,7 @@ static Renderer *init(Renderer *self) {
 
   self = (Renderer *) super(Object, self, init);
   if (self) {
+    _currentRenderer = self;
     $(self, renderDeviceDidReset);
   }
   return self;
@@ -377,6 +394,18 @@ static void renderDeviceWillReset(Renderer *self) {
 }
 
 /**
+ * @see Object::dealloc(Object *)
+ */
+static void dealloc(Object *self) {
+
+  if (_currentRenderer == (Renderer *) self) {
+    _currentRenderer = NULL;
+  }
+
+  super(Object, self, dealloc);
+}
+
+/**
  * @fn void Renderer::setClippingFrame(Renderer *self, const SDL_Rect *clippingFrame)
  * @memberof Renderer
  */
@@ -407,15 +436,26 @@ static void setDrawColor(Renderer *self, const SDL_Color *color) {
   self->color = *color;
 }
 
+/**
+ * @brief Returns the most recently initialized Renderer, or NULL.
+ */
+Renderer *MVC_CurrentRenderer(void) {
+
+  return _currentRenderer;
+}
+
 #pragma mark - Class lifecycle
 
 /**
  * @see Class::initialize(Class *)
  */
 static void initialize(Class *clazz) {
-  
+
+  ((ObjectInterface *) clazz->interface)->dealloc = dealloc;
+
   ((RendererInterface *) clazz->interface)->beginFrame = beginFrame;
   ((RendererInterface *) clazz->interface)->createTexture = createTexture;
+  ((RendererInterface *) clazz->interface)->destroyTexture = destroyTexture;
   ((RendererInterface *) clazz->interface)->drawLine = drawLine;
   ((RendererInterface *) clazz->interface)->drawLines = drawLines;
   ((RendererInterface *) clazz->interface)->drawRect = drawRect;

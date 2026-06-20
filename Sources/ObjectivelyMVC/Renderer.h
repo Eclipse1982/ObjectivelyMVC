@@ -164,6 +164,18 @@ struct RendererInterface {
   void (*drawTexture)(const Renderer *self, GLuint texture, const SDL_Rect *dest);
 
   /**
+   * @fn void Renderer::destroyTexture(const Renderer *self, GLuint texture)
+   * @brief Releases a texture handle previously returned by createTexture.
+   * @param self The Renderer.
+   * @param texture The texture handle.
+   * @remarks The base implementation calls `glDeleteTextures`. Renderers that
+   * map `createTexture` to a non-GL resource (e.g. a Vulkan-backed handle
+   * registry) must override this to release the corresponding resource.
+   * @memberof Renderer
+   */
+  void (*destroyTexture)(const Renderer *self, GLuint texture);
+
+  /**
    * @fn void Renderer::drawView(Renderer *self, View *view)
    * @brief Draws the given View, setting the clipping frame and invoking View::render.
    * @param self The Renderer.
@@ -237,3 +249,11 @@ struct RendererInterface {
  * @memberof Renderer
  */
 OBJECTIVELYMVC_EXPORT Class *_Renderer(void);
+
+/**
+ * @brief Returns the most recently initialized Renderer, or `NULL`.
+ * @details Lets texture-lifecycle calls made from contexts without a Renderer
+ * reference (e.g. View dealloc) route texture destruction through the active
+ * Renderer's vtable. ObjectivelyMVC uses a single Renderer per application.
+ */
+OBJECTIVELYMVC_EXPORT Renderer *MVC_CurrentRenderer(void);

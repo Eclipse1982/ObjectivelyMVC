@@ -238,7 +238,11 @@ static void dealloc(Object *self) {
   free(this->text);
 
   if (this->texture) {
-    glDeleteTextures(1, &this->texture);
+    const Renderer *renderer = MVC_CurrentRenderer();
+    if (renderer) {
+      $(renderer, destroyTexture, this->texture);
+    }
+    this->texture = 0;
   }
 
   super(Object, self, dealloc);
@@ -281,7 +285,10 @@ static void applyStyle(View *self, const Style *style) {
 
   if ($(self, bind, colorInlets, style->attributes)) {
     if (this->texture) {
-      glDeleteTextures(1, &this->texture);
+      const Renderer *renderer = MVC_CurrentRenderer();
+      if (renderer) {
+        $(renderer, destroyTexture, this->texture);
+      }
       this->texture = 0;
     }
   }
@@ -397,7 +404,10 @@ static void renderDeviceWillReset(View *self) {
   Text *this = (Text *) self;
 
   if (this->texture) {
-    glDeleteTextures(1, &this->texture);
+    const Renderer *renderer = MVC_CurrentRenderer();
+    if (renderer) {
+      $(renderer, destroyTexture, this->texture);
+    }
     this->texture = 0;
   }
 
@@ -463,7 +473,10 @@ static void setFont(Text *self, Font *font) {
     self->font = retain(font);
 
     if (self->texture) {
-      glDeleteTextures(1, &self->texture);
+      const Renderer *renderer = MVC_CurrentRenderer();
+      if (renderer) {
+        $(renderer, destroyTexture, self->texture);
+      }
       self->texture = 0;
     }
 
@@ -488,7 +501,10 @@ static void setText(Text *self, const char *text) {
     }
 
     if (self->texture) {
-      glDeleteTextures(1, &self->texture);
+      const Renderer *renderer = MVC_CurrentRenderer();
+      if (renderer) {
+        $(renderer, destroyTexture, self->texture);
+      }
       self->texture = 0;
     }
 

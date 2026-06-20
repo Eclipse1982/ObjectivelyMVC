@@ -54,7 +54,11 @@ static void dealloc(Object *self) {
   release(this->image);
 
   if (this->texture) {
-    glDeleteTextures(1, &this->texture);
+    const Renderer *renderer = MVC_CurrentRenderer();
+    if (renderer) {
+      $(renderer, destroyTexture, this->texture);
+    }
+    this->texture = 0;
   }
 
   super(Object, self, dealloc);
@@ -123,10 +127,12 @@ static void renderDeviceWillReset(View *self) {
   ImageView *this = (ImageView *) self;
 
   if (this->texture) {
-    glDeleteTextures(1, &this->texture);
+    const Renderer *renderer = MVC_CurrentRenderer();
+    if (renderer) {
+      $(renderer, destroyTexture, this->texture);
+    }
+    this->texture = 0;
   }
-
-  this->texture = 0;
 
   super(View, self, renderDeviceWillReset);
 }
@@ -186,7 +192,10 @@ static void setImage(ImageView *self, Image *image) {
   }
 
   if (self->texture) {
-    glDeleteTextures(1, &self->texture);
+    const Renderer *renderer = MVC_CurrentRenderer();
+    if (renderer) {
+      $(renderer, destroyTexture, self->texture);
+    }
     self->texture = 0;
   }
 }
