@@ -335,19 +335,19 @@ static void respondToEvent(WindowController *self, const SDL_Event *event) {
  */
 static void setRenderer(WindowController *self, Renderer *renderer) {
 
-  if (self->renderer != renderer || self->renderer == NULL) {
+  if (self->renderer != renderer) {
 
     release(self->renderer);
 
-    if (renderer) {
-      self->renderer = retain(renderer);
-    } else {
-      self->renderer = $(alloc(Renderer), init);
+    // Do not auto-create the base GL Renderer when none is provided: its init
+    // path issues GL calls (glGetError -> GL_GET_ERROR breakpoint), which abort
+    // under a non-GL backend (e.g. Vulkan) that has no current GL context. The
+    // application is expected to set its own Renderer before rendering.
+    self->renderer = renderer ? retain(renderer) : NULL;
+
+    if (self->renderer) {
+      $(self->viewController->view, renderDeviceDidReset);
     }
-
-    assert(self->renderer);
-
-    $(self->viewController->view, renderDeviceDidReset);
   }
 }
 
