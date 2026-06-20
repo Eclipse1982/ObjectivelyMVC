@@ -222,7 +222,9 @@ static void respondToEvent(WindowController *self, const SDL_Event *event) {
       // NULL, so fall back to the controller's own window: passing NULL would
       // assert in setWindow and leave the view tree unsized (0x0).
       $(self, setWindow, SDL_GL_GetCurrentWindow() ?: self->window);
-      $(self->renderer, renderDeviceDidReset);
+      if (self->renderer) {
+        $(self->renderer, renderDeviceDidReset);
+      }
       $(self->viewController, renderDeviceDidReset);
       $(self->viewController->view, updateBindings);
       break;
