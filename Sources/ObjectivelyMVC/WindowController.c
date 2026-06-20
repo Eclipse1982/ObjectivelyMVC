@@ -217,9 +217,11 @@ static void respondToEvent(WindowController *self, const SDL_Event *event) {
 
   switch (event->type) {
     case SDL_EVENT_WINDOW_EXPOSED:
-      if (SDL_GL_GetCurrentWindow()) {
-        $(self, setWindow, SDL_GL_GetCurrentWindow());
-      }
+      // Re-set the window to trigger a re-layout (moveToWindow sizes the view
+      // tree to the window). Under a non-GL backend SDL_GL_GetCurrentWindow() is
+      // NULL, so fall back to the controller's own window: passing NULL would
+      // assert in setWindow and leave the view tree unsized (0x0).
+      $(self, setWindow, SDL_GL_GetCurrentWindow() ?: self->window);
       $(self->renderer, renderDeviceDidReset);
       $(self->viewController, renderDeviceDidReset);
       $(self->viewController->view, updateBindings);
@@ -229,14 +231,12 @@ static void respondToEvent(WindowController *self, const SDL_Event *event) {
     case SDL_EVENT_WINDOW_MAXIMIZED:
     case SDL_EVENT_WINDOW_RESTORED:
     case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-      $(self, setWindow, SDL_GL_GetCurrentWindow());
+      $(self, setWindow, SDL_GL_GetCurrentWindow() ?: self->window);
       break;
     case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
     case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
     case SDL_EVENT_WINDOW_SAFE_AREA_CHANGED:
-      if (SDL_GL_GetCurrentWindow()) {
-        $(self, setWindow, SDL_GL_GetCurrentWindow());
-      }
+      $(self, setWindow, SDL_GL_GetCurrentWindow() ?: self->window);
       break;
     case SDL_EVENT_WINDOW_DESTROYED:
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
